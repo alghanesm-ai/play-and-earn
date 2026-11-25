@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6758e8">
+<title>PLAY & EARN</title>
+<style>
+:root{--purple:#6758e8;--ink:#20213a;--muted:#777b91;--bg:#f5f6fc}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink)}
+.app{max-width:480px;margin:auto;min-height:100vh;padding:18px 16px 32px}
+header{display:flex;justify-content:space-between;align-items:center;margin:5px 0 22px}
+.brand{font-weight:900;font-size:19px}.brand span{color:var(--purple)}
+.pill{background:white;border:1px solid #e8e8f2;border-radius:30px;padding:9px 13px;font-weight:800;color:#5b4dd1}
+.panel,.hero{border-radius:20px;padding:18px;background:white;border:1px solid #ededf5;margin-bottom:14px}
+.hero{background:linear-gradient(135deg,#7164ed,#5144cb);color:white;border:0}
+.hero h1{font-size:26px;margin:7px 0}.hero p{margin:0;font-size:14px;opacity:.9}
+h2{font-size:18px;margin:0 0 13px}
+label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}
+input{width:100%;padding:13px;border:1px solid #dedfee;border-radius:12px;font-size:15px;background:#fff}
+button{border:0;border-radius:13px;padding:13px 15px;font-weight:800;font-size:14px;cursor:pointer}
+.primary{background:var(--purple);color:white;width:100%;margin-top:12px}
+.secondary{background:#f0efff;color:#5548c8;width:100%;margin-top:9px}
+.google{background:white;border:1px solid #dedfee;color:#333;width:100%;margin-top:9px}
+.muted{color:var(--muted);font-size:13px;line-height:1.5}
+.error{color:#b33b3b;font-size:13px;min-height:18px;margin-top:8px}
+.success{color:#16845a;font-size:13px;min-height:18px;margin-top:8px}
+.hidden{display:none!important}
+.profile-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #eee}
+.profile-row:last-child{border:0}
+.value{font-weight:800;text-align:right;overflow-wrap:anywhere}
+.badge{display:inline-block;background:#f0efff;color:#5548c8;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:800}
+.notice{background:#fff8e7;border:1px solid #f4e2b4;color:#765a16;padding:12px;border-radius:13px;font-size:12px;line-height:1.5}
+footer{text-align:center;color:#9a9caf;font-size:11px;margin-top:24px}
+</style>
+</head>
+<body>
+<main class="app">
+<header><div class="brand">🎮 PLAY <span>& EARN</span></div><div class="pill">Akun pemain</div></header>
+<section class="hero"><div class="badge">PROTOTIPE • TAHAP 2</div><h1>Selamat datang!</h1><p>Buat akun atau masuk untuk melihat profil pemainmu.</p></section>
+
+<section id="authPanel" class="panel">
+<h2 id="authTitle">Buat akun</h2>
+<div id="signupFields">
+<label for="username">Username</label><input id="username" maxlength="20" autocomplete="nickname" placeholder="Contoh: pemainhebat">
+</div>
+<label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="nama@email.com">
+<label for="password">Password</label><input id="password" type="password" autocomplete="new-password" minlength="6" placeholder="Minimal 6 karakter">
+<button class="primary" id="emailAction">Daftar dengan email</button>
+<button class="secondary hidden" id="switchMode">Sudah punya akun? Login</button>
+<button class="google" id="googleAction">Lanjutkan dengan Google</button>
+<div class="error" id="authMessage" role="status"></div>
+<p class="muted">Dengan melanjutkan, kamu setuju menggunakan akun ini sesuai aturan aplikasi. Jangan gunakan password yang sama dengan akun penting lainnya.</p>
+</section>
+
+<section id="profilePanel" class="panel hidden">
+<h2>Profil pemain</h2>
+<div class="profile-row"><span>Username</span><span class="value" id="profileName">-</span></div>
+<div class="profile-row"><span>Email</span><span class="value" id="profileEmail">-</span></div>
+<div class="profile-row"><span>Total poin tersimpan</span><span class="value" id="profilePoints">0</span></div>
+<div class="profile-row"><span>Jawaban benar</span><span class="value" id="profileWins">0</span></div>
+<div class="success" id="profileMessage"></div>
+<button class="secondary" id="logout">Keluar</button>
+</section>
+
+<section class="notice">Keamanan: skor dan poin tidak dapat diubah langsung oleh pemain. Pada tahap ini profil akun disimpan di Firebase, sedangkan pemberian poin permanen belum diaktifkan. Nanti poin hanya diberikan oleh sistem server setelah memvalidasi permainan.</section>
+<footer>PLAY & EARN • DATA AKUN DISIMPAN DI FIREBASE</footer>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  GoogleAuthProvider, signInWithRedirect, getRedirectResult,
+  onAuthStateChanged, signOut, updateProfile
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* GANTI NILAI INI dengan konfigurasi aplikasi web dari Firebase Console. */
+const firebaseConfig = {// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  apiKey: "AIzaSyCr0wTCJUuJmloHx4X-a6H0yTXH9zWGgLw",
+  authDomain: "play-and-earn-2a921.firebaseapp.com",
+  projectId: "play-and-earn-2a921",
+  storageBucket: "play-and-earn-2a921.firebasestorage.app",
+  messagingSenderId: "563430344858",
+  appId: "1:563430344858:web:40453cb1434aff7e9cf723",
+  measurementId: "G-8S1YYBZVRS"
+};
+
+const configReady = !Object.values(firebaseConfig).some(v => String(v).startsWith("ISI_"));
+const authPanel = document.querySelector("#authPanel");
+const profilePanel = document.querySelector("#profilePanel");
+const authMessage = document.querySelector("#authMessage");
+const emailAction = document.querySelector("#emailAction");
+const switchMode = document.querySelector("#switchMode");
+const signupFields = document.querySelector("#signupFields");
+const authTitle = document.querySelector("#authTitle");
+const googleAction = document.querySelector("#googleAction");
+let mode = "signup";
+let auth, db;
+
+function message(text, good=false) {
+  authMessage.textContent = text;
+  authMessage.className = good ? "success" : "error";
+}
+function setMode(next) {
+  mode = next;
+  const signup = mode === "signup";
+  authTitle.textContent = signup ? "Buat akun" : "Login";
+  emailAction.textContent = signup ? "Daftar dengan email" : "Login dengan email";
+  signupFields.classList.toggle("hidden", !signup);
+  switchMode.textContent = signup ? "Sudah punya akun? Login" : "Belum punya akun? Daftar";
+}
+switchMode.addEventListener("click", () => setMode(mode === "signup" ? "login" : "signup"));
+
+if (!configReady) {
+  message("Hubungkan Firebase dahulu: isi firebaseConfig mengikuti panduan README.");
+  emailAction.disabled = true;
+  googleAction.disabled = true;
+} else {
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+
+  async function ensureUserProfile(user, preferredName="") {
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      const name = (preferredName || user.displayName || (user.email || "pemain").split("@")[0]).trim().slice(0,20);
+      await setDoc(ref, {
+        username: name || "pemain",
+        email: user.email || "",
+        totalPoints: 0,
+        wins: 0,
+        createdAt: serverTimestamp()
+      });
+    }
+  }
+
+  emailAction.addEventListener("click", async () => {
+    message("");
+    const email = document.querySelector("#email").value.trim();
+    const password = document.querySelector("#password").value;
+    const username = document.querySelector("#username").value.trim();
+    if (!email || !password) return message("Isi email dan password terlebih dahulu.");
+    if (password.length < 6) return message("Password minimal 6 karakter.");
+    if (mode === "signup" && !/^[a-zA-Z0-9_]{3,20}$/.test(username))
+      return message("Username 3–20 karakter; gunakan huruf, angka, atau garis bawah.");
+    emailAction.disabled = true;
+    try {
+      if (mode === "signup") {
+        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(credential.user, { displayName: username });
+        await ensureUserProfile(credential.user, username);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+    } catch (e) {
+      message(friendlyError(e));
+    } finally { emailAction.disabled = false; }
+  });
+
+  googleAction.addEventListener("click", async () => {
+    message("");
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithRedirect(auth, provider);
+    } catch (e) { message(friendlyError(e)); }
+  });
+
+  getRedirectResult(auth).catch(e => message(friendlyError(e)));
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) {
+      authPanel.classList.remove("hidden");
+      profilePanel.classList.add("hidden");
+      return;
+    }
+    try {
+      await ensureUserProfile(user);
+      const snap = await getDoc(doc(db, "users", user.uid));
+      const data = snap.data();
+      document.querySelector("#profileName").textContent = data.username || user.displayName || "Pemain";
+      document.querySelector("#profileEmail").textContent = user.email || "-";
+      document.querySelector("#profilePoints").textContent = data.totalPoints ?? 0;
+      document.querySelector("#profileWins").textContent = data.wins ?? 0;
+      authPanel.classList.add("hidden");
+      profilePanel.classList.remove("hidden");
+    } catch (e) {
+      message("Tidak dapat memuat profil: " + friendlyError(e));
+    }
+  });
+
+  document.querySelector("#logout").addEventListener("click", () => signOut(auth).catch(e => message(friendlyError(e))));
+}
+
+function friendlyError(error) {
+  const code = error?.code || "";
+  const known = {
+    "auth/email-already-in-use":"Email ini sudah terdaftar.",
+    "auth/invalid-email":"Format email tidak valid.",
+    "auth/weak-password":"Password terlalu lemah.",
+    "auth/invalid-credential":"Email atau password salah.",
+    "auth/popup-blocked":"Proses Google terhalang browser. Coba izinkan pengalihan lalu ulangi.",
+    "auth/unauthorized-domain":"Domain website belum diizinkan di Firebase Authentication."
+  };
+  return known[code] || (error?.message || "Terjadi kesalahan. Coba lagi.");
+}
+</script>
+</body>
+</html>
