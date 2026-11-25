@@ -54,15 +54,31 @@ footer{text-align:center;color:#9a9caf;font-size:11px;margin-top:24px}
 </section>
 
 <section id="profilePanel" class="panel hidden">
-<h2>Profil pemain</h2>
-<div class="profile-row"><span>Username</span><span class="value" id="profileName">-</span></div>
-<div class="profile-row"><span>Email</span><span class="value" id="profileEmail">-</span></div>
-<div class="profile-row"><span>Total poin tersimpan</span><span class="value" id="profilePoints">0</span></div>
-<div class="profile-row"><span>Jawaban benar</span><span class="value" id="profileWins">0</span></div>
-<div class="success" id="profileMessage"></div>
-<button class="secondary" id="logout">Keluar</button>
-</section>
+  <h2>Dashboard Pemain</h2>
 
+  <div class="profile-row">
+    <span>Username</span>
+    <span class="value" id="profileName">Pemain</span>
+  </div>
+  <div class="profile-row">
+    <span>Email</span>
+    <span class="value" id="profileEmail">-</span>
+  </div>
+
+  <div class="profile-row">
+    <span>Total Poin</span>
+    <span class="value" id="profilePoints">0</span>
+  </div>
+
+  <div class="profile-row">
+    <span>Jawaban benar</span>
+    <span class="value" id="profileWins">0</span>
+  </div>
+
+  <div class="success" id="profileMessage"></div>
+
+  <button class="secondary" id="logout">Keluar</button>
+</section>
 <section class="notice">Keamanan: skor dan poin tidak dapat diubah langsung oleh pemain. Pada tahap ini profil akun disimpan di Firebase, sedangkan pemberian poin permanen belum diaktifkan. Nanti poin hanya diberikan oleh sistem server setelah memvalidasi permainan.</section>
 <footer>PLAY & EARN • DATA AKUN DISIMPAN DI FIREBASE</footer>
 </main>
